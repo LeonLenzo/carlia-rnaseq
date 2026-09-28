@@ -1,0 +1,40 @@
+# Data never enters this repo — see _refdata + /scratch on Setonix
+*.fq.gz
+*.fastq.gz
+*.fq
+*.fastq
+*.bam
+*.sam
+*.cram
+*.bai
+raw/
+raw_data/
+data/
+refs/*
+!refs/README.md
+
+# Large reference/index artefacts
+*.ht2
+*.idx
+*.tar.gz
+*.gz
+!**/*.md.gz
+
+# Outputs that regenerate
+counts/
+logs/
+*.log
+.Rhistory
+.RData
+__pycache__/
+
+# The delivery email holds live OSS credentials — keep it out
+*.msg
+
+# Local-only working notes and delivery paperwork (order numbers, customer details)
+NOTES.local.md
+docs/*.pdf
+
+# Project description stays local, not published
+README.md
+refs/
