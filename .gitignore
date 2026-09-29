@@ -38,3 +38,7 @@ docs/*.pdf
 # Project description stays local, not published
 README.md
 refs/
+
+# QC artefacts: bulky and regenerable. The small summary table is tracked.
+qc/fastp_reports/
+qc/multiqc/
