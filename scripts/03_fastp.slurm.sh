@@ -25,10 +25,13 @@ module load fastp/0.23.4-5dugkew
 
 mkdir -p "$TRIM" "$QC" logs
 
-# Row N+1 of the sample sheet, skipping the header
-SAMPLE=$(awk -v n="$SLURM_ARRAY_TASK_ID" 'NR==n+1 {print $1}' "$SAMPLES")
-R1=$(awk  -v n="$SLURM_ARRAY_TASK_ID" 'NR==n+1 {print $9}' "$SAMPLES")
-R2=$(awk  -v n="$SLURM_ARRAY_TASK_ID" 'NR==n+1 {print $10}' "$SAMPLES")
+# Row N+1 of the sample sheet, skipping the header. The tr strips any stray CR:
+# a CRLF sheet silently appends \r to the last field, which makes the R2 path
+# invalid while still printing identically in an error message.
+row=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$SAMPLES" | tr -d '\r')
+SAMPLE=$(echo "$row" | cut -f1)
+R1=$(echo "$row" | cut -f9)
+R2=$(echo "$row" | cut -f10)
 
 if [[ -z "$SAMPLE" || -z "$R1" || -z "$R2" ]]; then
     echo "ERROR: could not read sample sheet row $SLURM_ARRAY_TASK_ID" >&2
