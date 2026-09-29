@@ -20,8 +20,6 @@ QC="$PROJECT/qc/fastp_reports"
 SAMPLES="$PROJECT/metadata/samples.tsv"
 
 THREADS=16
-QUALITY=30      # per-base qualified phred, matches the ada1 run
-MIN_LEN=50      # 150 bp reads, so anything shorter is not worth aligning
 
 module load fastp/0.23.4-5dugkew
 
@@ -49,10 +47,6 @@ fastp \
     -I "$RAW/$R2" \
     -o "$TRIM/${SAMPLE}_R1.trim.fq.gz" \
     -O "$TRIM/${SAMPLE}_R2.trim.fq.gz" \
-    -q "$QUALITY" \
-    --length_required "$MIN_LEN" \
-    --detect_adapter_for_pe \
-    --trim_poly_g \
     --thread "$THREADS" \
     --html "$QC/${SAMPLE}.fastp.html" \
     --json "$QC/${SAMPLE}.fastp.json"
