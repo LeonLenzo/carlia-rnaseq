@@ -18,7 +18,13 @@ REFS="$PROJECT/refs"
 TRIM="$PROJECT/trimmed"
 QUANT="$PROJECT/quant"
 SAMPLES="$PROJECT/metadata/samples.tsv"
-IDX="$REFS/GCA_016801405.1_ASM1680140v1_cds.kallisto.idx"
+IDX="$REFS/GCA_016801405.1_ASM1680140v1_cds.kallisto-0.52.0.idx"
+
+# Pinned to the locally built 0.52.0, which is compiled with HDF5. The first run used
+# `spack load kallisto`, which resolves against PAWSEY_PROJECT (fl3) rather than the
+# job's account and gave a ~hdf5 build: -b was accepted and silently ignored, and every
+# run_info.json reported n_bootstraps 0. See setup_kallisto_native.slurm.sh.
+KALLISTO="/software/projects/pawsey1168/llenzo/kallisto/0.52.0/bin/kallisto"
 
 THREADS=16
 
@@ -26,17 +32,19 @@ THREADS=16
 # 86.9% pseudoaligned, --rf-stranded 85.0%, --fr-stranded 1.9%. A dUTP reverse library.
 STRAND="--rf-stranded"
 
-# Bootstraps are not used by DESeq2, which takes point estimates through tximport. They
-# cost little here (small fungal transcriptome) and keep sleuth and fishpond available.
+# Bootstraps are not used by DESeq2, which takes point estimates through tximport, but
+# they keep sleuth and fishpond available. They only materialise if kallisto was built
+# with HDF5; the check below refuses to run otherwise rather than repeat the silent
+# no-op of the first attempt.
 BOOT=100
 
 [[ -s "$IDX" ]] || { echo "ERROR: $IDX missing, run 05_kallisto_index.slurm.sh first" >&2; exit 1; }
+[[ -x "$KALLISTO" ]] || { echo "ERROR: $KALLISTO missing, run setup_kallisto_native.slurm.sh" >&2; exit 1; }
 
-# kallisto is a spack package, not a plain module. Do not pipe `module load` or
-# `spack load`: both are shell functions, so a pipe puts them in a subshell and the
-# PATH change is lost.
-module load spack/0.23.1 >/dev/null 2>&1
-spack load kallisto
+if (( BOOT > 0 )) && ! ldd "$KALLISTO" | grep -qi hdf5; then
+    echo "ERROR: $KALLISTO is not linked against HDF5, so -b $BOOT would be ignored" >&2
+    exit 1
+fi
 
 mkdir -p "$QUANT" logs
 
@@ -58,11 +66,11 @@ for f in "$R1" "$R2"; do
 done
 
 echo "=== $SAMPLE ==="
-kallisto version
+"$KALLISTO" version
 echo "index:  $IDX"
 echo "strand: ${STRAND:-unstranded}"
 
-kallisto quant \
+"$KALLISTO" quant \
     -i "$IDX" \
     -o "$QUANT/$SAMPLE" \
     -t "$THREADS" \
@@ -71,4 +79,10 @@ kallisto quant \
     "$R1" "$R2"
 
 echo "=== done: $SAMPLE ==="
-grep -E 'n_processed|n_pseudoaligned|p_pseudoaligned' "$QUANT/$SAMPLE/run_info.json"
+grep -E 'n_processed|n_pseudoaligned|p_pseudoaligned|n_bootstraps' "$QUANT/$SAMPLE/run_info.json"
+
+# The first run requested bootstraps and silently produced none. Fail loudly instead.
+if (( BOOT > 0 )); then
+    [[ -s "$QUANT/$SAMPLE/abundance.h5" ]] \
+        || { echo "ERROR: no abundance.h5 written, bootstraps did not run" >&2; exit 1; }
+fi
