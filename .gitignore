@@ -42,3 +42,10 @@ refs/
 # QC artefacts: bulky and regenerable. The small summary table is tracked.
 qc/fastp_reports/
 qc/multiqc/
+qc/strand_probe/
+qc/boot_smoke/
+
+# Quantification output. The repo is public and this is unpublished honours data, so
+# these must never be committable: on Setonix the working copy sits next to them.
+quant/
+quant_*/
