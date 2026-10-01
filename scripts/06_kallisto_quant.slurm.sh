@@ -22,9 +22,9 @@ IDX="$REFS/GCA_016801405.1_ASM1680140v1_cds.kallisto.idx"
 
 THREADS=16
 
-# Set from 06a_strand_probe.slurm.sh. Empty means unstranded; otherwise --rf-stranded
-# (dUTP, the common case) or --fr-stranded.
-STRAND=""
+# Set from 06a_strand_probe.slurm.sh (job 50222835, SN15Gln1, 1M pairs): unstranded
+# 86.9% pseudoaligned, --rf-stranded 85.0%, --fr-stranded 1.9%. A dUTP reverse library.
+STRAND="--rf-stranded"
 
 # Bootstraps are not used by DESeq2, which takes point estimates through tximport. They
 # cost little here (small fungal transcriptome) and keep sleuth and fishpond available.
